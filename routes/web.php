@@ -17,12 +17,9 @@ use Inertia\Inertia;
 */
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    // Redirect root to the login page so the artisan serve URL opens the login by default.
+    // Guest middleware on the login route will forward authenticated users to the home/dashboard as needed.
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {

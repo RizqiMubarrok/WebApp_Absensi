@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, useForm } from "@inertiajs/react";
+import { Head, Link, useForm, router } from "@inertiajs/react";
 import Badge from "@/Components/Badge";
 
 function formatDate(iso) {
@@ -18,7 +18,9 @@ function formatDate(iso) {
     }
 }
 
-const STATUSES = ["present", "permit", "absent"];
+
+
+const STATUSES = ["present", "permit", "absent", "sick"];
 const STATUS_LABELS = {
     present: "Hadir",
     absent: "Alfa",
@@ -26,15 +28,30 @@ const STATUS_LABELS = {
     permit: "Izin",
 };
 
-export default function Index({ attendances, students, filters, auth }) {
+export default function Index({
+    attendances,
+    students,
+    filters,
+    classes,
+    auth,
+}) {
     const { data, setData, post, processing } = useForm({
-        date: new Date().toISOString().slice(0, 10),
+        // Use the date & student_class filter from the server when available so the table and form stay in sync
+        date: filters?.date ?? new Date().toISOString().slice(0, 10),
+        class: filters?.student_class ?? "",
         records: students.map((s) => ({
             student_id: s.id,
             status: "present",
             note: "",
         })),
     });
+
+    // Local state for the recap table date: this must be independent from the marking form date
+    const [recapDate, setRecapDate] = useState(
+        filters?.date ?? new Date().toISOString().slice(0, 10)
+    );
+    // Separate class filter used only by the recap table (does NOT affect the marking UI)
+    const [recapClass, setRecapClass] = useState(filters?.class ?? "");
 
     useEffect(() => {
         // rebuild records if student list changes
@@ -47,6 +64,60 @@ export default function Index({ attendances, students, filters, auth }) {
             }))
         );
     }, [students]);
+
+    // Keep the recap date in sync when the server sends a date filter
+    useEffect(() => {
+        if (filters?.date) setRecapDate(filters.date);
+    }, [filters?.date]);
+
+    function navigateRecapDate(date) {
+        // request the attendances page for the recap table only (do NOT modify which students are shown in the marking UI)
+        router.get(
+            route("attendances.index"),
+            { date },
+            { preserveState: true, replace: true }
+        );
+    }
+
+    function handleDateChange(value) {
+        // Only update the marking form date — do not change the recap table date
+        setData("date", value);
+    }
+
+    useEffect(() => {
+        if (filters?.student_class) setData("class", filters.student_class);
+    }, [filters?.student_class]);
+
+    // Keep the recap class in sync when the server sends a class filter for the rekap table
+    useEffect(() => {
+        if (filters?.class) setRecapClass(filters.class);
+    }, [filters?.class]);
+
+    function handleClassChange(value) {
+        setData("class", value);
+        // Use `student_class` so this only filters which students appear in the marking UI (does not filter the rekap table)
+        router.get(
+            route("attendances.index"),
+            { date: data.date, student_class: value },
+            { preserveState: true, replace: true }
+        );
+    }
+
+    function handleRekapDateChange(value) {
+        // Update the recap table date independently and request the server for that date's recap
+        setRecapDate(value);
+        navigateRecapDate(value);
+    }
+
+    function handleRekapClassChange(value) {
+        // Update the recap class independently and request the server for that class's recap on the current recapDate
+        setRecapClass(value);
+        router.get(
+            route("attendances.index"),
+            { date: recapDate, class: value },
+            { preserveState: true, replace: true }
+        );
+    }
 
     function setStatus(index, status) {
         const newRecords = [...data.records];
@@ -92,7 +163,7 @@ export default function Index({ attendances, students, filters, auth }) {
                 </div>
                 <div className="bg-white shadow sm:rounded-lg p-4 mb-6">
                     <form onSubmit={submit} className="space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex items-center gap-3">
                                 <label htmlFor="date" className="sr-only">
                                     Tanggal
@@ -102,11 +173,31 @@ export default function Index({ attendances, students, filters, auth }) {
                                     type="date"
                                     value={data.date}
                                     onChange={(e) =>
-                                        setData("date", e.target.value)
+                                        handleDateChange(e.target.value)
                                     }
                                     className="border rounded-md px-3 py-2"
                                     aria-label="Tanggal absen"
                                 />
+
+                                {/* Class selector for filtering which students appear in the marking UI */}
+                                <select
+                                    aria-label="Kelas"
+                                    value={data.class}
+                                    onChange={(e) =>
+                                        handleClassChange(e.target.value)
+                                    }
+                                    className="border rounded-md px-3 py-2 w-40 sm:w-48"
+                                >
+                                    <option value="">Semua Kelas</option>
+                                    {classes.map((c) => (
+                                        <option key={c} value={c}>
+                                            {c}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex-shrink-0">
                                 <button
                                     type="submit"
                                     className="bg-indigo-600 text-white px-4 py-2 rounded-md"
@@ -166,6 +257,37 @@ export default function Index({ attendances, students, filters, auth }) {
                     </form>
                 </div>
                 <div className="bg-white shadow sm:rounded-lg">
+                    <div className="p-4 flex items-center justify-between border-b">
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="date"
+                                aria-label="Filter tanggal"
+                                value={recapDate}
+                                onChange={(e) =>
+                                    handleRekapDateChange(e.target.value)
+                                }
+                                className="border rounded-md px-3 py-2"
+                            />
+
+                            <select
+                                aria-label="Filter rekap kelas"
+                                value={recapClass}
+                                onChange={(e) =>
+                                    handleRekapClassChange(e.target.value)
+                                }
+                                className="border rounded-md px-3 py-2 w-40 sm:w-48"
+                            >
+                                <option value="">Semua Kelas</option>
+                                {classes.map((c) => (
+                                    <option key={c} value={c}>
+                                        {c}
+                                    </option>
+                                ))}
+                            </select>
+
+
+                        </div>
+                    </div>
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -174,6 +296,9 @@ export default function Index({ attendances, students, filters, auth }) {
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Student
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Kelas
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Status
@@ -191,6 +316,9 @@ export default function Index({ attendances, students, filters, auth }) {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {a.student.name}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        {a.student.class}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <Badge type={a.status}>

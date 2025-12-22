@@ -26,6 +26,15 @@ class AttendanceController extends Controller
             $query->whereDate('date', $date);
         }
 
+        // support filtering attendances by student class (rekap) — uses `class` query param
+        $classFilter = $request->query('class');
+        if ($classFilter) {
+            $query->whereHas('student', fn($s) => $s->where('class', $classFilter));
+        }
+
+        // support filtering the marking UI by class via `student_class` param (this does NOT affect the rekap table)
+        $studentClass = $request->query('student_class');
+
         // By default show as many rows as there are students so the table isn't limited to 15.
         // Also allow `?per_page=all` to return every attendance row.
         $studentsCount = Student::count();
@@ -39,13 +48,17 @@ class AttendanceController extends Controller
             $attendances = $query->orderByDesc('date')->paginate($perPage)->withQueryString();
         }
 
-        // provide student list for attendance marking UI
-        $students = Student::orderBy('name')->get();
+        // provide classes list for class selector
+        $classes = Student::select('class')->distinct()->whereNotNull('class')->orderBy('class')->pluck('class');
+
+        // provide student list for attendance marking UI (filtered by student_class if requested)
+        $students = Student::when($studentClass, fn($q) => $q->where('class', $studentClass))->orderBy('name')->get();
 
         return Inertia::render('Attendances/Index', [
             'attendances' => $attendances,
             'students' => $students,
-            'filters' => $request->only(['q', 'status', 'date', 'per_page']),
+            'classes' => $classes,
+            'filters' => $request->only(['q', 'status', 'date', 'per_page', 'class', 'student_class']),
         ]);
     }
 

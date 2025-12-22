@@ -81,7 +81,10 @@ export default function Index({ students, filters, classes, auth }) {
                                 href={route("students.create")}
                                 className="bg-indigo-600 text-white px-4 py-2 rounded-md inline-flex items-center gap-2 ms-auto"
                             >
-                                ➕ Tambah Data
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Tambah Data
                             </a>
                         </form>
                     </div>
@@ -105,6 +108,9 @@ export default function Index({ students, filters, classes, auth }) {
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                                     Kelas
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                    Alamat
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                                     No HP
@@ -146,6 +152,9 @@ export default function Index({ students, filters, classes, auth }) {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {s.class}
                                         </td>
+                                        <td className="px-6 py-4 max-w-[240px] truncate whitespace-nowrap overflow-hidden">
+                                            {s.address}
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {s.phone}
                                         </td>
@@ -155,13 +164,13 @@ export default function Index({ students, filters, classes, auth }) {
                                                     "students.edit",
                                                     s.id
                                                 )}
-                                                className="bg-blue-500 text-white px-2 py-1 rounded text-sm inline-block"
+                                                className="bg-blue-500 text-white px-3 py-1 rounded text-sm inline-flex items-center justify-center w-14"
                                             >
                                                 Edit
                                             </a>
                                             <button
                                                 onClick={() => destroy(s.id)}
-                                                className="bg-red-500 text-white px-2 py-1 rounded text-sm inline-block ml-2"
+                                                className="bg-red-500 text-white px-3 py-1 rounded text-sm inline-flex items-center justify-center w-14 ml-2"
                                             >
                                                 Hapus
                                             </button>
