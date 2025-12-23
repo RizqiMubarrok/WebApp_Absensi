@@ -154,7 +154,7 @@ export default function Create({ auth }) {
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-blue-600 text-white px-6 py-2 rounded"
+                                className="bg-[#2F59C8] hover:bg-[#274aa8] text-white px-6 py-2 rounded transition-colors duration-150"
                             >
                                 Simpan
                             </button>

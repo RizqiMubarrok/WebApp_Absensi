@@ -16,7 +16,7 @@ export default function Pagination({ links }) {
                             href={link.url}
                             className={`px-3 py-1 rounded ${
                                 link.active
-                                    ? "bg-indigo-600 text-white"
+                                    ? "bg-[#2F59C8] text-white"
                                     : "bg-white border"
                             }`}
                             dangerouslySetInnerHTML={{ __html: link.label }}

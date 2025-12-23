@@ -198,7 +198,9 @@ export default function Authenticated({ user, header, children }) {
                             <Link
                                 method="post"
                                 href={route("logout")}
-                                className="w-full flex items-center gap-3 text-sm bg-white/10 hover:bg-white/20 px-3 py-2 rounded-md"
+                                className={
+                                    "w-full flex items-center gap-3 text-sm px-3 py-2 rounded-md transition-colors duration-150 text-white bg-transparent hover:bg-white/10"
+                                }
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"

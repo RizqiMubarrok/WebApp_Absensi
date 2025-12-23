@@ -21,8 +21,8 @@ export default function Edit({ auth, mustVerifyEmail, status }) {
 
             <div className="py-3 w-full px-3 sm:px-4 lg:px-6">
                 <div className="space-y-4 w-full">
-                    <div className="bg-gray-50 rounded-xl p-3 mb-4">
-                        <div className="bg-white p-3 rounded-xl shadow">
+                    <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                        <div className="bg-white p-4 rounded-xl shadow">
                             <div
                                 className="text-lg font-medium text-gray-800 truncate"
                                 title="Profile"

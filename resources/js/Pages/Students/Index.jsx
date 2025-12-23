@@ -73,16 +73,27 @@ export default function Index({ students, filters, classes, auth }) {
                                 ))}
                             </select>
 
-                            <button className="bg-indigo-600 text-white px-4 py-2 rounded-md">
+                            <button className="bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md transition-colors duration-150">
                                 Cari
                             </button>
 
                             <a
                                 href={route("students.create")}
-                                className="bg-indigo-600 text-white px-4 py-2 rounded-md inline-flex items-center gap-2 ms-auto"
+                                className="bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md inline-flex items-center gap-2 ms-auto transition-colors duration-150"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M12 4v16m8-8H4"
+                                    />
                                 </svg>
                                 Tambah Data
                             </a>
