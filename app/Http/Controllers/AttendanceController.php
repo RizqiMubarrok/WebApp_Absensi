@@ -55,11 +55,32 @@ class AttendanceController extends Controller
         // provide student list for attendance marking UI (filtered by student_class if requested)
         $students = Student::when($studentClass, fn($q) => $q->where('class', $studentClass))->orderBy('name')->get();
 
+        // detect if the requested recap date is a Sunday (school holiday)
+        $isHoliday = false;
+        if ($date) {
+            try {
+                $isHoliday = Carbon::parse($date)->isSunday();
+            } catch (\Exception $e) {
+                $isHoliday = false;
+            }
+        }
+
+        // determine if the marking form's date is a holiday (defaults to today if not provided)
+        $markingDate = $request->query('date', now()->format('Y-m-d'));
+        $marking_is_holiday = false;
+        try {
+            $marking_is_holiday = Carbon::parse($markingDate)->isSunday();
+        } catch (\Exception $e) {
+            $marking_is_holiday = false;
+        }
+
         return Inertia::render('Attendances/Index', [
             'attendances' => $attendances,
             'students' => $students,
             'classes' => $classes,
             'filters' => $request->only(['q', 'status', 'date', 'per_page', 'class', 'student_class']),
+            'is_holiday' => $isHoliday,
+            'marking_is_holiday' => $marking_is_holiday,
         ]);
     }
 
@@ -78,6 +99,15 @@ class AttendanceController extends Controller
 
         $date = $data['date'];
 
+        // Prevent marking on Sundays (school holiday)
+        try {
+            if (Carbon::parse($date)->isSunday()) {
+                return Redirect::route('attendances.index', ['date' => $date])->with('error', 'Sekolah libur. Absensi tidak dapat dilakukan pada hari Minggu.');
+            }
+        } catch (\Exception $e) {
+            // if parsing fails, allow processing to continue
+        }
+
         foreach ($data['records'] as $rec) {
             Attendance::updateOrCreate(
                 ['student_id' => $rec['student_id'], 'date' => $date],
@@ -87,51 +117,4 @@ class AttendanceController extends Controller
 
         return Redirect::route('attendances.index')->with('success', 'Attendance saved.');
     }
-
-    /**
-     * Return attendance recap statistics per student for a given month.
-     *
-     * Query params:
-     *  - month=YYYY-MM (defaults to current month)
-     *  - class=ClassName (optional)
-     */
-    public function recap(Request $request)
-    {
-        $month = $request->query('month') ?? now()->format('Y-m');
-        try {
-            $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-        } catch (\Exception $e) {
-            $start = now()->startOfMonth();
-        }
-        $end = (clone $start)->endOfMonth();
-
-        $classFilter = $request->query('class');
-
-        // students filtered by class if provided
-        $students = Student::when($classFilter, fn($q) => $q->where('class', $classFilter))->orderBy('name')->get();
-
-        $counts = Attendance::selectRaw('student_id, status, count(*) as cnt')
-            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-            ->when($classFilter, fn($q) => $q->whereHas('student', fn($s) => $s->where('class', $classFilter)))
-            ->groupBy('student_id', 'status')
-            ->get()
-            ->groupBy('student_id');
-
-        $data = $students->map(function ($s) use ($counts) {
-            $group = $counts->get($s->id) ?? collect();
-            return [
-                'student_id' => $s->id,
-                'nis' => $s->nis,
-                'name' => $s->name,
-                'class' => $s->class,
-                'hadir' => (int) ($group->firstWhere('status', 'present')->cnt ?? 0),
-                'izin' => (int) ($group->firstWhere('status', 'permit')->cnt ?? 0),
-                'sakit' => (int) ($group->firstWhere('status', 'sick')->cnt ?? 0),
-                'alfa' => (int) ($group->firstWhere('status', 'absent')->cnt ?? 0),
-                'total' => $group->sum('cnt'),
-            ];
-        });
-
-        return response()->json(['data' => $data]);
-    }
-} 
+}

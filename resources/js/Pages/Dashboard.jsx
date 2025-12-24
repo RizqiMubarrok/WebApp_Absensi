@@ -53,6 +53,8 @@ export default function Dashboard({ auth }) {
     // Prefer monthly data (from the 1st of this month) when available, otherwise fall back to last7
     const source = (stats.month && stats.month.length) ? stats.month : stats.last7;
 
+    const isHoliday = source.map((d) => d.is_holiday ? true : false);
+
     const barData = {
         labels: source.map((d) =>
             new Date(d.date).toLocaleDateString("id-ID", {
@@ -64,22 +66,22 @@ export default function Dashboard({ auth }) {
             {
                 label: "Hadir",
                 data: source.map((d) => d.present ?? 0),
-                backgroundColor: "#3B82F6",
+                backgroundColor: source.map((d) => (d.is_holiday ? "#9CA3AF" : "#3B82F6")),
             },
             {
                 label: "Izin",
                 data: source.map((d) => d.permit ?? 0),
-                backgroundColor: "#F59E0B",
+                backgroundColor: source.map((d) => (d.is_holiday ? "#9CA3AF" : "#F59E0B")),
             },
             {
                 label: "Alfa",
                 data: source.map((d) => d.absent ?? 0),
-                backgroundColor: "#EF4444",
+                backgroundColor: source.map((d) => (d.is_holiday ? "#9CA3AF" : "#EF4444")),
             },
             {
                 label: "Sakit",
                 data: source.map((d) => d.sick ?? 0),
-                backgroundColor: "#10B981",
+                backgroundColor: source.map((d) => (d.is_holiday ? "#9CA3AF" : "#10B981")),
             },
         ],
     };
@@ -88,7 +90,21 @@ export default function Dashboard({ auth }) {
         responsive: true,
         plugins: {
             legend: { position: "bottom" },
-            tooltip: { mode: "index", intersect: false },
+            tooltip: {
+                mode: "index",
+                intersect: false,
+                callbacks: {
+                    label: function (context) {
+                        const idx = context.dataIndex;
+                        if (source[idx] && source[idx].is_holiday) {
+                            // Show a single `Sekolah libur` label for the first dataset item
+                            if (context.datasetIndex === 0) return "Sekolah libur";
+                            return "";
+                        }
+                        return `${context.dataset.label}: ${context.formattedValue}`;
+                    },
+                },
+            },
         },
         scales: {
             x: {
@@ -256,6 +272,10 @@ export default function Dashboard({ auth }) {
                         </div>
 
                         <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full bg-gray-400 inline-block"></span>
+                                <span>Sekolah libur</span>
+                            </div>
                             <div className="flex items-center gap-2">
                                 <span className="w-3 h-3 rounded-full bg-blue-600 inline-block"></span>
                                 <span>Hadir</span>

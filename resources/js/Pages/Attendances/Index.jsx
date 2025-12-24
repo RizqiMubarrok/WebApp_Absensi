@@ -18,6 +18,8 @@ function formatDate(iso) {
     }
 }
 
+
+
 const STATUSES = ["present", "permit", "absent", "sick"];
 const STATUS_LABELS = {
     present: "Hadir",
@@ -32,6 +34,8 @@ export default function Index({
     filters,
     classes,
     auth,
+    is_holiday,
+    marking_is_holiday,
 }) {
     const { data, setData, post, processing } = useForm({
         // Use the date & student_class filter from the server when available so the table and form stay in sync
@@ -43,6 +47,14 @@ export default function Index({
             note: "",
         })),
     });
+
+    const markingIsHoliday = (() => {
+        try {
+            return new Date(data.date).getDay() === 0;
+        } catch (e) {
+            return marking_is_holiday ?? false;
+        }
+    })();
 
     // Local state for the recap table date: this must be independent from the marking form date
     const [recapDate, setRecapDate] = useState(
@@ -198,60 +210,66 @@ export default function Index({
                             <div className="flex-shrink-0">
                                 <button
                                     type="submit"
-                                    className="bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md transition-colors duration-150"
-                                    disabled={processing}
+                                    className={`bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md transition-colors duration-150 ${markingIsHoliday ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={processing || markingIsHoliday}
                                 >
                                     Simpan Absensi
                                 </button>
                             </div>
                         </div>
 
-                        <div className="mt-4 rounded-md border divide-y divide-gray-100 max-h-[52vh] overflow-auto">
-                            {students.map((s, idx) => (
-                                <div
-                                    key={s.id}
-                                    className="flex items-center justify-between gap-4 p-3 hover:bg-gray-50"
-                                >
-                                    <div className="min-w-0">
-                                        <div className="font-medium text-sm truncate">
-                                            {s.name}
-                                            <span className="text-xs text-gray-400 ms-2">
-                                                {s.nis}
-                                            </span>
+                        {markingIsHoliday ? (
+                            <div className="bg-white p-6 text-center text-gray-600 rounded-b-md">
+                                Absensi tidak bisa dilakukan karena sekolah libur.
+                            </div>
+                        ) : (
+                            <div className="mt-4 rounded-md border divide-y divide-gray-100 max-h-[52vh] overflow-auto">
+                                {students.map((s, idx) => (
+                                    <div
+                                        key={s.id}
+                                        className="flex items-center justify-between gap-4 p-3 hover:bg-gray-50"
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="font-medium text-sm truncate">
+                                                {s.name}
+                                                <span className="text-xs text-gray-400 ms-2">
+                                                    {s.nis}
+                                                </span>
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                {s.class}
+                                            </div>
                                         </div>
-                                        <div className="text-xs text-gray-500 mt-1">
-                                            {s.class}
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 ms-4">
-                                        <select
-                                            aria-label={`Status ${s.name}`}
-                                            value={data.records[idx]?.status}
-                                            onChange={(e) =>
-                                                setStatus(idx, e.target.value)
-                                            }
-                                            className="border rounded-md px-3 py-1 text-sm bg-white w-36 sm:w-44"
-                                        >
-                                            {STATUSES.map((st) => (
-                                                <option key={st} value={st}>
-                                                    {STATUS_LABELS[st] ?? st}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <div className="flex items-center gap-2 ms-4">
+                                            <select
+                                                aria-label={`Status ${s.name}`}
+                                                value={data.records[idx]?.status}
+                                                onChange={(e) =>
+                                                    setStatus(idx, e.target.value)
+                                                }
+                                                className="border rounded-md px-3 py-1 text-sm bg-white w-36 sm:w-44"
+                                            >
+                                                {STATUSES.map((st) => (
+                                                    <option key={st} value={st}>
+                                                        {STATUS_LABELS[st] ?? st}
+                                                    </option>
+                                                ))}
+                                            </select>
 
-                                        <input
-                                            aria-label={`Catatan ${s.name}`}
-                                            placeholder="Note"
-                                            value={data.records[idx]?.note}
-                                            onChange={(e) =>
-                                                setNote(idx, e.target.value)
-                                            }
-                                            className="border rounded-md px-3 py-1 text-sm w-44 sm:w-64"
-                                        />
+                                            <input
+                                                aria-label={`Catatan ${s.name}`}
+                                                placeholder="Note"
+                                                value={data.records[idx]?.note}
+                                                onChange={(e) =>
+                                                    setNote(idx, e.target.value)
+                                                }
+                                                className="border rounded-md px-3 py-1 text-sm w-44 sm:w-64"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </form>
                 </div>
                 <div className="bg-white shadow sm:rounded-lg">
@@ -282,53 +300,61 @@ export default function Index({
                                     </option>
                                 ))}
                             </select>
+
+
                         </div>
                     </div>
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Date
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Student
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Kelas
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Note
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {attendances.data.map((a) => (
-                                <tr key={a.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {formatDate(a.date)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {a.student.name}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {a.student.class}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <Badge type={a.status}>
-                                            {STATUS_LABELS[a.status] ??
-                                                a.status}
-                                        </Badge>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {a.note}
-                                    </td>
+
+                    {is_holiday ? (
+                        <div className="bg-white p-6 text-center text-gray-600 rounded-b-md">
+                            Tidak ada absensi karena sekolah libur.
+                        </div>
+                    ) : (
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Date
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Student
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Kelas
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Note
+                                    </th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {attendances.data.map((a) => (
+                                    <tr key={a.id}>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {formatDate(a.date)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {a.student.name}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {a.student.class}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <Badge type={a.status}>
+                                                {STATUS_LABELS[a.status] ?? a.status}
+                                            </Badge>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {a.note}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>

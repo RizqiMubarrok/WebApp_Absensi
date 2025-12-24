@@ -39,6 +39,7 @@ class DashboardController extends Controller
                 'permit' => $counts['permit'] ?? 0,
                 'absent' => $counts['absent'] ?? 0,
                 'sick' => $counts['sick'] ?? 0,
+                'is_holiday' => \Carbon\Carbon::parse($d)->isSunday(),
             ]);
         }
 
@@ -62,6 +63,7 @@ class DashboardController extends Controller
                 'permit' => $counts['permit'] ?? 0,
                 'absent' => $counts['absent'] ?? 0,
                 'sick' => $counts['sick'] ?? 0,
+                'is_holiday' => \Carbon\Carbon::parse($date)->isSunday(),
             ]);
 
             $d->addDay();
