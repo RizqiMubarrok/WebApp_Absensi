@@ -41,6 +41,15 @@ Route::middleware('auth')->group(function () {
     // Attendance management
     Route::get('attendances', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('attendances.index');
     Route::post('attendances', [\App\Http\Controllers\AttendanceController::class, 'store'])->name('attendances.store');
+
+    // New page route (passes class list for selector)
+    Route::get('/new-page', function () {
+        $classes = \App\Models\Student::select('class')->distinct()->whereNotNull('class')->orderBy('class')->pluck('class');
+        return Inertia::render('NewPage', ['classes' => $classes]);
+    })->name('newpage');
+
+    // Attendance recap JSON endpoint (per-student counts for a month)
+    Route::get('/attendances/recap', [\App\Http\Controllers\AttendanceController::class, 'recap'])->name('attendances.recap');
 });
 
 require __DIR__.'/auth.php';

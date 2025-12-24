@@ -50,8 +50,11 @@ export default function Dashboard({ auth }) {
         ],
     };
 
+    // Prefer monthly data (from the 1st of this month) when available, otherwise fall back to last7
+    const source = (stats.month && stats.month.length) ? stats.month : stats.last7;
+
     const barData = {
-        labels: stats.last7.map((d) =>
+        labels: source.map((d) =>
             new Date(d.date).toLocaleDateString("id-ID", {
                 day: "2-digit",
                 month: "short",
@@ -60,22 +63,22 @@ export default function Dashboard({ auth }) {
         datasets: [
             {
                 label: "Hadir",
-                data: stats.last7.map((d) => d.present ?? 0),
+                data: source.map((d) => d.present ?? 0),
                 backgroundColor: "#3B82F6",
             },
             {
                 label: "Izin",
-                data: stats.last7.map((d) => d.permit ?? 0),
+                data: source.map((d) => d.permit ?? 0),
                 backgroundColor: "#F59E0B",
             },
             {
                 label: "Alfa",
-                data: stats.last7.map((d) => d.absent ?? 0),
+                data: source.map((d) => d.absent ?? 0),
                 backgroundColor: "#EF4444",
             },
             {
                 label: "Sakit",
-                data: stats.last7.map((d) => d.sick ?? 0),
+                data: source.map((d) => d.sick ?? 0),
                 backgroundColor: "#10B981",
             },
         ],

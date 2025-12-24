@@ -109,6 +109,16 @@ export default function Sidebar() {
                             </svg>
                             <span>Profile</span>
                         </Link>
+
+                        <Link
+                            href={route("newpage")}
+                            className={itemClass(route().current("newpage"))}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16M4 12h16" />
+                            </svg>
+                            <span>Halaman Baru</span>
+                        </Link>
                     </nav>
                 </div>
 

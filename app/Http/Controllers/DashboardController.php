@@ -42,11 +42,37 @@ class DashboardController extends Controller
             ]);
         }
 
+        // monthly breakdown from the 1st of this month up to today
+        $month = collect();
+        $start = now()->startOfMonth();
+        $end = now();
+        $d = $start->copy();
+        while ($d->lte($end)) {
+            $date = $d->format('Y-m-d');
+
+            $counts = Attendance::whereDate('date', $date)
+                ->selectRaw('status, count(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status')
+                ->toArray();
+
+            $month->push([
+                'date' => $date,
+                'present' => $counts['present'] ?? 0,
+                'permit' => $counts['permit'] ?? 0,
+                'absent' => $counts['absent'] ?? 0,
+                'sick' => $counts['sick'] ?? 0,
+            ]);
+
+            $d->addDay();
+        }
+
         return response()->json([
             'total_students' => $totalStudents,
             'recap' => $recap,
             'classes_count' => $classesCount,
             'last7' => $last7,
+            'month' => $month,
         ]);
     }
 }

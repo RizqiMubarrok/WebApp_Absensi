@@ -64,6 +64,7 @@ export default function Index({ students, filters, classes, auth }) {
                                 name="class"
                                 defaultValue={filters.class ?? ""}
                                 className="border rounded-md px-4 py-2 w-44"
+                                onChange={(e) => e.target.form.submit()}
                             >
                                 <option value="">Kelas</option>
                                 {classes?.map((c) => (

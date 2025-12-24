@@ -7,6 +7,7 @@ use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
@@ -86,4 +87,51 @@ class AttendanceController extends Controller
 
         return Redirect::route('attendances.index')->with('success', 'Attendance saved.');
     }
-}
+
+    /**
+     * Return attendance recap statistics per student for a given month.
+     *
+     * Query params:
+     *  - month=YYYY-MM (defaults to current month)
+     *  - class=ClassName (optional)
+     */
+    public function recap(Request $request)
+    {
+        $month = $request->query('month') ?? now()->format('Y-m');
+        try {
+            $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        } catch (\Exception $e) {
+            $start = now()->startOfMonth();
+        }
+        $end = (clone $start)->endOfMonth();
+
+        $classFilter = $request->query('class');
+
+        // students filtered by class if provided
+        $students = Student::when($classFilter, fn($q) => $q->where('class', $classFilter))->orderBy('name')->get();
+
+        $counts = Attendance::selectRaw('student_id, status, count(*) as cnt')
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->when($classFilter, fn($q) => $q->whereHas('student', fn($s) => $s->where('class', $classFilter)))
+            ->groupBy('student_id', 'status')
+            ->get()
+            ->groupBy('student_id');
+
+        $data = $students->map(function ($s) use ($counts) {
+            $group = $counts->get($s->id) ?? collect();
+            return [
+                'student_id' => $s->id,
+                'nis' => $s->nis,
+                'name' => $s->name,
+                'class' => $s->class,
+                'hadir' => (int) ($group->firstWhere('status', 'present')->cnt ?? 0),
+                'izin' => (int) ($group->firstWhere('status', 'permit')->cnt ?? 0),
+                'sakit' => (int) ($group->firstWhere('status', 'sick')->cnt ?? 0),
+                'alfa' => (int) ($group->firstWhere('status', 'absent')->cnt ?? 0),
+                'total' => $group->sum('cnt'),
+            ];
+        });
+
+        return response()->json(['data' => $data]);
+    }
+} 
