@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Carbon\Carbon;
 
@@ -81,6 +82,143 @@ class AttendanceController extends Controller
             'filters' => $request->only(['q', 'status', 'date', 'per_page', 'class', 'student_class']),
             'is_holiday' => $isHoliday,
             'marking_is_holiday' => $marking_is_holiday,
+        ]);
+    }
+
+    /**
+     * Helper to build monthly recaps and excluded dates
+     */
+    private function buildMonthlyRekap(string $month): array
+    {
+        try {
+            $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        } catch (\Exception $e) {
+            $start = now()->startOfMonth();
+            $month = $start->format('Y-m');
+        }
+        $end = $start->copy()->endOfMonth();
+
+        $startDate = $start->format('Y-m-d');
+        $endDate = $end->format('Y-m-d');
+
+        // collect Sundays in the month so they can be excluded from counts
+        $sundays = [];
+        $dd = $start->copy();
+        while ($dd->lte($end)) {
+            if ($dd->isSunday()) {
+                $sundays[] = $dd->format('Y-m-d');
+            }
+            $dd->addDay();
+        }
+
+        // aggregate attendances by student and status for the month (exclude Sundays)
+        $attendanceQuery = Attendance::whereBetween('date', [$startDate, $endDate]);
+        if (!empty($sundays)) {
+            $attendanceQuery->whereNotIn('date', $sundays);
+        }
+
+        $counts = $attendanceQuery
+            ->select('student_id', 'status', DB::raw('count(*) as total'))
+            ->groupBy('student_id', 'status')
+            ->get();
+
+        $students = Student::orderBy('name')->get();
+
+        // prepare a map of student_id => totals
+        $map = [];
+        foreach ($students as $s) {
+            $map[$s->id] = [
+                'id' => $s->id,
+                'name' => $s->name,
+                'nis' => $s->nis,
+                'class' => $s->class,
+                'present' => 0,
+                'permit' => 0,
+                'absent' => 0,
+                'sick' => 0,
+            ];
+        }
+
+        foreach ($counts as $c) {
+            if (!isset($map[$c->student_id])) continue;
+            $status = $c->status;
+            $map[$c->student_id][$status] = (int) $c->total;
+        }
+
+        // compute totals per student (hadir + izin + alfa + sakit)
+        foreach ($map as $id => $row) {
+            $map[$id]['total'] = ($row['present'] ?? 0) + ($row['permit'] ?? 0) + ($row['absent'] ?? 0) + ($row['sick'] ?? 0);
+        }
+
+        $rekapData = array_values($map);
+
+        return [$month, $rekapData, $sundays];
+    }
+
+    /**
+     * Monthly attendance recap per student
+     */
+    public function rekap(Request $request)
+    {
+        $month = $request->query('month', now()->format('Y-m'));
+        list($month, $rekapData, $sundays) = $this->buildMonthlyRekap($month);
+
+        return Inertia::render('Attendances/Rekap', [
+            'rekapMonth' => $month,
+            'rekapData' => $rekapData,
+            'excluded_dates' => $sundays,
+        ]);
+    }
+
+    /**
+     * Export monthly recap as CSV
+     */
+    public function rekapExport(Request $request)
+    {
+        $month = $request->query('month', now()->format('Y-m'));
+        list($month, $rekapData, $sundays) = $this->buildMonthlyRekap($month);
+
+        $filename = "rekapan-{$month}.csv";
+
+        $callback = function () use ($rekapData) {
+            $out = fopen('php://output', 'w');
+            // BOM for Excel compatibility
+            fprintf($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['NIS', 'Nama', 'Kelas', 'Hadir', 'Izin', 'Sakit', 'Alfa', 'Total']);
+
+            foreach ($rekapData as $r) {
+                fputcsv($out, [
+                    $r['nis'] ?? '',
+                    $r['name'] ?? '',
+                    $r['class'] ?? '',
+                    $r['present'] ?? 0,
+                    $r['permit'] ?? 0,
+                    $r['sick'] ?? 0,
+                    $r['absent'] ?? 0,
+                    $r['total'] ?? 0,
+                ]);
+            }
+
+            fclose($out);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    /**
+     * Print-friendly page for monthly recap
+     */
+    public function rekapPrint(Request $request)
+    {
+        $month = $request->query('month', now()->format('Y-m'));
+        list($month, $rekapData, $sundays) = $this->buildMonthlyRekap($month);
+
+        return Inertia::render('Attendances/RekapPrint', [
+            'rekapMonth' => $month,
+            'rekapData' => $rekapData,
+            'excluded_dates' => $sundays,
         ]);
     }
 

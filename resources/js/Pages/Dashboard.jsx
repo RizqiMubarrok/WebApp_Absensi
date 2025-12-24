@@ -51,9 +51,10 @@ export default function Dashboard({ auth }) {
     };
 
     // Prefer monthly data (from the 1st of this month) when available, otherwise fall back to last7
-    const source = (stats.month && stats.month.length) ? stats.month : stats.last7;
+    const source =
+        stats.month && stats.month.length ? stats.month : stats.last7;
 
-    const isHoliday = source.map((d) => d.is_holiday ? true : false);
+    const isHoliday = source.map((d) => (d.is_holiday ? true : false));
 
     const barData = {
         labels: source.map((d) =>
@@ -66,22 +67,30 @@ export default function Dashboard({ auth }) {
             {
                 label: "Hadir",
                 data: source.map((d) => d.present ?? 0),
-                backgroundColor: source.map((d) => (d.is_holiday ? "#9CA3AF" : "#3B82F6")),
+                backgroundColor: source.map((d) =>
+                    d.is_holiday ? "#9CA3AF" : "#3B82F6"
+                ),
             },
             {
                 label: "Izin",
                 data: source.map((d) => d.permit ?? 0),
-                backgroundColor: source.map((d) => (d.is_holiday ? "#9CA3AF" : "#F59E0B")),
+                backgroundColor: source.map((d) =>
+                    d.is_holiday ? "#9CA3AF" : "#F59E0B"
+                ),
             },
             {
                 label: "Alfa",
                 data: source.map((d) => d.absent ?? 0),
-                backgroundColor: source.map((d) => (d.is_holiday ? "#9CA3AF" : "#EF4444")),
+                backgroundColor: source.map((d) =>
+                    d.is_holiday ? "#9CA3AF" : "#EF4444"
+                ),
             },
             {
                 label: "Sakit",
                 data: source.map((d) => d.sick ?? 0),
-                backgroundColor: source.map((d) => (d.is_holiday ? "#9CA3AF" : "#10B981")),
+                backgroundColor: source.map((d) =>
+                    d.is_holiday ? "#9CA3AF" : "#10B981"
+                ),
             },
         ],
     };
@@ -98,7 +107,8 @@ export default function Dashboard({ auth }) {
                         const idx = context.dataIndex;
                         if (source[idx] && source[idx].is_holiday) {
                             // Show a single `Sekolah libur` label for the first dataset item
-                            if (context.datasetIndex === 0) return "Sekolah libur";
+                            if (context.datasetIndex === 0)
+                                return "Sekolah libur";
                             return "";
                         }
                         return `${context.dataset.label}: ${context.formattedValue}`;

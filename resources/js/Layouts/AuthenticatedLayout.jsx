@@ -74,6 +74,13 @@ export default function Authenticated({ user, header, children }) {
                         >
                             Dashboard
                         </ResponsiveNavLink>
+
+                        <ResponsiveNavLink
+                            href={route("attendances.rekap")}
+                            active={route().current("attendances.rekap")}
+                        >
+                            Rekapan Absensi
+                        </ResponsiveNavLink>
                     </div>
                 </div>
             </nav>
@@ -140,6 +147,31 @@ export default function Authenticated({ user, header, children }) {
                                         />
                                     </svg>
                                     <span>Absensi Siswa</span>
+                                </Link>
+
+                                <Link
+                                    href={route("attendances.rekap")}
+                                    className={
+                                        route().current("attendances.rekap")
+                                            ? "w-full flex items-center gap-3 text-sm bg-white/20 px-3 py-2 rounded-md"
+                                            : "w-full flex items-center gap-3 text-sm bg-transparent text-white hover:bg-white/10 px-3 py-2 rounded-md"
+                                    }
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-5 w-5"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M3 7h18M3 12h18M3 17h18"
+                                        />
+                                    </svg>
+                                    <span>Rekapan Absensi</span>
                                 </Link>
 
                                 <Link

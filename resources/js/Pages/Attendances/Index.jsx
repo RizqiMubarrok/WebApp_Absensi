@@ -18,8 +18,6 @@ function formatDate(iso) {
     }
 }
 
-
-
 const STATUSES = ["present", "permit", "absent", "sick"];
 const STATUS_LABELS = {
     present: "Hadir",
@@ -210,7 +208,11 @@ export default function Index({
                             <div className="flex-shrink-0">
                                 <button
                                     type="submit"
-                                    className={`bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md transition-colors duration-150 ${markingIsHoliday ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className={`bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md transition-colors duration-150 ${
+                                        markingIsHoliday
+                                            ? "opacity-50 cursor-not-allowed"
+                                            : ""
+                                    }`}
                                     disabled={processing || markingIsHoliday}
                                 >
                                     Simpan Absensi
@@ -220,7 +222,8 @@ export default function Index({
 
                         {markingIsHoliday ? (
                             <div className="bg-white p-6 text-center text-gray-600 rounded-b-md">
-                                Absensi tidak bisa dilakukan karena sekolah libur.
+                                Absensi tidak bisa dilakukan karena sekolah
+                                libur.
                             </div>
                         ) : (
                             <div className="mt-4 rounded-md border divide-y divide-gray-100 max-h-[52vh] overflow-auto">
@@ -243,15 +246,21 @@ export default function Index({
                                         <div className="flex items-center gap-2 ms-4">
                                             <select
                                                 aria-label={`Status ${s.name}`}
-                                                value={data.records[idx]?.status}
+                                                value={
+                                                    data.records[idx]?.status
+                                                }
                                                 onChange={(e) =>
-                                                    setStatus(idx, e.target.value)
+                                                    setStatus(
+                                                        idx,
+                                                        e.target.value
+                                                    )
                                                 }
                                                 className="border rounded-md px-3 py-1 text-sm bg-white w-36 sm:w-44"
                                             >
                                                 {STATUSES.map((st) => (
                                                     <option key={st} value={st}>
-                                                        {STATUS_LABELS[st] ?? st}
+                                                        {STATUS_LABELS[st] ??
+                                                            st}
                                                     </option>
                                                 ))}
                                             </select>
@@ -300,8 +309,6 @@ export default function Index({
                                     </option>
                                 ))}
                             </select>
-
-
                         </div>
                     </div>
 
@@ -344,7 +351,8 @@ export default function Index({
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <Badge type={a.status}>
-                                                {STATUS_LABELS[a.status] ?? a.status}
+                                                {STATUS_LABELS[a.status] ??
+                                                    a.status}
                                             </Badge>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
