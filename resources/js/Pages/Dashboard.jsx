@@ -107,7 +107,8 @@ export default function Dashboard({ auth }) {
                         const idx = context.dataIndex;
                         if (source[idx] && source[idx].is_holiday) {
                             // Show a single `grafik kosong karena sekolah libur` label for the first dataset item
-                            if (context.datasetIndex === 0) return "grafik kosong karena sekolah libur";
+                            if (context.datasetIndex === 0)
+                                return "grafik kosong karena sekolah libur";
                             return "";
                         }
                         return `${context.dataset.label}: ${context.formattedValue}`;
@@ -116,11 +117,21 @@ export default function Dashboard({ auth }) {
                         const idx = context.dataIndex;
                         // For holiday dates, render a white box with a black stroke
                         if (source[idx] && source[idx].is_holiday) {
-                            return { backgroundColor: "#ffffff", borderColor: "#000000", borderWidth: 2 };
+                            return {
+                                backgroundColor: "#ffffff",
+                                borderColor: "#000000",
+                                borderWidth: 2,
+                            };
                         }
                         const ds = context.dataset;
-                        const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[idx] : ds.backgroundColor;
-                        return { backgroundColor: bg, borderColor: bg, borderWidth: 0 };
+                        const bg = Array.isArray(ds.backgroundColor)
+                            ? ds.backgroundColor[idx]
+                            : ds.backgroundColor;
+                        return {
+                            backgroundColor: bg,
+                            borderColor: bg,
+                            borderWidth: 0,
+                        };
                     },
                 },
             },
@@ -133,7 +144,7 @@ export default function Dashboard({ auth }) {
                 ticks: {
                     maxRotation: 45,
                     minRotation: 45,
-                    align: 'end',
+                    align: "end",
                     autoSkip: false,
                 },
             },
