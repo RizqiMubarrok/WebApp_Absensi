@@ -1,12 +1,41 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router } from "@inertiajs/react";
 
-export default function Rekap({ auth, rekapMonth, rekapData }) {
+export default function Rekap({
+    auth,
+    rekapMonth,
+    rekapData,
+    classes = [],
+    selected_class = null,
+}) {
+    const [selectedClass, setSelectedClass] = useState(selected_class ?? "");
+    const [availableClasses, setAvailableClasses] = useState(classes ?? []);
+
+    useEffect(() => {
+        if (!availableClasses || availableClasses.length === 0) {
+            fetch(route("attendances.classes"), { credentials: "same-origin" })
+                .then((r) => r.json())
+                .then((data) => {
+                    if (Array.isArray(data)) setAvailableClasses(data);
+                })
+                .catch(() => {});
+        }
+    }, []);
+
     function handleMonthChange(value) {
         router.get(
             route("attendances.rekap"),
-            { month: value },
+            { month: value, class: selectedClass || undefined },
+            { replace: true }
+        );
+    }
+
+    function handleClassChange(value) {
+        setSelectedClass(value);
+        router.get(
+            route("attendances.rekap"),
+            { month: rekapMonth, class: value || undefined },
             { replace: true }
         );
     }
@@ -66,9 +95,25 @@ export default function Rekap({ auth, rekapMonth, rekapData }) {
                                 className="border rounded-md px-3 py-2"
                             />
 
+                            <select
+                                value={selectedClass}
+                                onChange={(e) =>
+                                    handleClassChange(e.target.value)
+                                }
+                                className="border rounded-md px-3 py-2 w-44"
+                            >
+                                <option value="">Semua Kelas</option>
+                                {availableClasses.map((c) => (
+                                    <option key={c} value={c}>
+                                        {c}
+                                    </option>
+                                ))}
+                            </select>
+
                             <a
                                 href={route("attendances.rekap.export", {
                                     month: rekapMonth,
+                                    class: selectedClass || undefined,
                                 })}
                                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-150 inline-flex items-center gap-2 w-36 justify-center"
                             >
@@ -107,6 +152,7 @@ export default function Rekap({ auth, rekapMonth, rekapData }) {
                                     window.open(
                                         route("attendances.rekap.print", {
                                             month: rekapMonth,
+                                            class: selectedClass || undefined,
                                         }),
                                         "_blank"
                                     )

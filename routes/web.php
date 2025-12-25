@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::get('attendances/rekap/print', [\App\Http\Controllers\AttendanceController::class, 'rekapPrint'])->name('attendances.rekap.print');
     Route::get('attendances/rekap/export', [\App\Http\Controllers\AttendanceController::class, 'rekapExport'])->name('attendances.rekap.export');
     Route::get('attendances/rekap', [\App\Http\Controllers\AttendanceController::class, 'rekap'])->name('attendances.rekap');
+    Route::get('attendances/classes', [\App\Http\Controllers\AttendanceController::class, 'classes'])->name('attendances.classes');
     Route::get('attendances', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('attendances.index');
     Route::post('attendances', [\App\Http\Controllers\AttendanceController::class, 'store'])->name('attendances.store');
 });

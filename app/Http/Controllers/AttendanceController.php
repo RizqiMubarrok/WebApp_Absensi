@@ -88,7 +88,7 @@ class AttendanceController extends Controller
     /**
      * Helper to build monthly recaps and excluded dates
      */
-    private function buildMonthlyRekap(string $month): array
+    private function buildMonthlyRekap(string $month, ?string $class = null): array
     {
         try {
             $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
@@ -122,7 +122,7 @@ class AttendanceController extends Controller
             ->groupBy('student_id', 'status')
             ->get();
 
-        $students = Student::orderBy('name')->get();
+        $students = Student::when($class, fn($q) => $q->where('class', $class))->orderBy('name')->get();
 
         // prepare a map of student_id => totals
         $map = [];
@@ -161,12 +161,18 @@ class AttendanceController extends Controller
     public function rekap(Request $request)
     {
         $month = $request->query('month', now()->format('Y-m'));
-        list($month, $rekapData, $sundays) = $this->buildMonthlyRekap($month);
+        $class = $request->query('class');
+        list($month, $rekapData, $sundays) = $this->buildMonthlyRekap($month, $class);
+
+        // provide classes list for class selector
+        $classes = Student::select('class')->distinct()->whereNotNull('class')->orderBy('class')->pluck('class');
 
         return Inertia::render('Attendances/Rekap', [
             'rekapMonth' => $month,
             'rekapData' => $rekapData,
             'excluded_dates' => $sundays,
+            'classes' => $classes,
+            'selected_class' => $class,
         ]);
     }
 
@@ -176,9 +182,10 @@ class AttendanceController extends Controller
     public function rekapExport(Request $request)
     {
         $month = $request->query('month', now()->format('Y-m'));
-        list($month, $rekapData, $sundays) = $this->buildMonthlyRekap($month);
+        $class = $request->query('class');
+        list($month, $rekapData, $sundays) = $this->buildMonthlyRekap($month, $class);
 
-        $filename = "rekapan-{$month}.csv";
+        $filename = "rekapan-{$month}" . ($class ? "-{$class}" : "") . ".csv";
 
         $callback = function () use ($rekapData) {
             $out = fopen('php://output', 'w');
@@ -213,13 +220,23 @@ class AttendanceController extends Controller
     public function rekapPrint(Request $request)
     {
         $month = $request->query('month', now()->format('Y-m'));
-        list($month, $rekapData, $sundays) = $this->buildMonthlyRekap($month);
+        $class = $request->query('class');
+        list($month, $rekapData, $sundays) = $this->buildMonthlyRekap($month, $class);
 
         return Inertia::render('Attendances/RekapPrint', [
             'rekapMonth' => $month,
             'rekapData' => $rekapData,
             'excluded_dates' => $sundays,
         ]);
+    }
+
+    /**
+     * Return distinct class list (JSON) for client-side selection
+     */
+    public function classes(Request $request)
+    {
+        $classes = Student::select('class')->distinct()->whereNotNull('class')->orderBy('class')->pluck('class');
+        return response()->json($classes);
     }
 
     /**
