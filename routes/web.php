@@ -37,6 +37,9 @@ Route::middleware('auth')->group(function () {
 
     // Students management (pages + actions)
     Route::resource('students', \App\Http\Controllers\StudentController::class);
+    // CSV import for bulk student creation/update
+    Route::post('students/import', [\App\Http\Controllers\StudentController::class, 'import'])->name('students.import');
+    Route::get('students/import/template', [\App\Http\Controllers\StudentController::class, 'importTemplate'])->name('students.import.template');
 
     // Attendance management
     Route::get('attendances/rekap/print', [\App\Http\Controllers\AttendanceController::class, 'rekapPrint'])->name('attendances.rekap.print');

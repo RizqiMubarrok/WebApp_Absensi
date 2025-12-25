@@ -1,6 +1,6 @@
 import React from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head } from "@inertiajs/react";
+import { Head, usePage, router } from "@inertiajs/react";
 import Pagination from "@/Components/Pagination";
 
 export default function Index({
@@ -27,6 +27,22 @@ export default function Index({
     };
     const startIndex =
         ((meta.current_page ?? 1) - 1) * (meta.per_page ?? rows.length);
+
+    const { flash } = usePage().props;
+    const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute("content");
+
+    function handleCsvFile(e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const fd = new FormData();
+        fd.append("file", file);
+        // Use Inertia to POST FormData (preserves redirects & flash messages)
+        router.post(route("students.import"), fd, { forceFormData: true });
+        // clear the input so selecting the same file again will trigger change
+        e.target.value = null;
+    }
 
     return (
         <AuthenticatedLayout
@@ -85,28 +101,102 @@ export default function Index({
                                 Cari
                             </button>
 
-                            <a
-                                href={route("students.create")}
-                                className="bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md inline-flex items-center gap-2 ms-auto transition-colors duration-150"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-4 w-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth={2}
+                            <div className="ms-auto flex items-center gap-3">
+                                <form
+                                    id="csvUploadForm"
+                                    action={route("students.import")}
+                                    method="post"
+                                    encType="multipart/form-data"
+                                    className="inline-flex items-center gap-2"
                                 >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M12 4v16m8-8H4"
+                                    <input
+                                        type="hidden"
+                                        name="_token"
+                                        value={csrfToken}
                                     />
-                                </svg>
-                                Tambah Data
-                            </a>
+
+                                    <input
+                                        id="csvFileInput"
+                                        type="file"
+                                        name="file"
+                                        accept=".csv,text/csv"
+                                        className="hidden"
+                                        onChange={handleCsvFile}
+                                    />
+                                    <label
+                                        htmlFor="csvFileInput"
+                                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-150 inline-flex items-center gap-2 w-36 justify-center cursor-pointer"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth={2}
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M12 3v12"
+                                            />
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M8 11l4 4 4-4"
+                                            />
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                d="M21 21H3"
+                                            />
+                                        </svg>
+                                        <span>Import CSV</span>
+                                    </label>
+                                </form>
+
+                                <a
+                                    href={route("students.create")}
+                                    className="bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md inline-flex items-center gap-2 transition-colors duration-150"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M12 4v16m8-8H4"
+                                        />
+                                    </svg>
+                                    Tambah Data
+                                </a>
+                            </div>
                         </form>
                     </div>
+
+                    {flash?.success && (
+                        <div className="mt-4 p-4 bg-green-50 border-l-4 border-green-500 text-green-700">
+                            {flash.success}
+                        </div>
+                    )}
+
+                    {flash?.import_errors && flash.import_errors.length > 0 && (
+                        <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
+                            <div className="font-medium">
+                                Beberapa baris gagal diimpor:
+                            </div>
+                            <ul className="list-disc ms-5 mt-2 text-sm">
+                                {flash.import_errors.map((e, i) => (
+                                    <li key={i}>{e}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">

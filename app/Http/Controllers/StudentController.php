@@ -107,4 +107,93 @@ class StudentController extends Controller
 
         return Redirect::route('students.index')->with('success', 'Student deleted.');
     }
+
+    /**
+     * Import students from uploaded CSV file.
+     * Expected header row: nis,name,gender,class,phone,address,email
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt',
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->getRealPath();
+        if (($handle = fopen($path, 'r')) === false) {
+            return Redirect::route('students.index')->with('error', 'Tidak dapat membuka file.');
+        }
+
+        $header = null;
+        $created = $updated = $skipped = 0;
+        $errors = [];
+        $rowNumber = 0;
+
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            $rowNumber++;
+            if ($rowNumber === 1) {
+                // normalize header keys to lowercase trimmed
+                $header = array_map(fn($h) => strtolower(trim($h)), $row);
+                continue;
+            }
+
+            if (!$header || count($row) !== count($header)) {
+                $errors[] = "Baris {$rowNumber}: jumlah kolom tidak sesuai.";
+                $skipped++;
+                continue;
+            }
+
+            $data = array_combine($header, $row);
+            $nis = trim($data['nis'] ?? $data['nisn'] ?? '');
+            $name = trim($data['name'] ?? '');
+
+            if (!$nis || !$name) {
+                $skipped++;
+                continue;
+            }
+
+            $attrs = [
+                'nis' => $nis,
+                'name' => $name,
+                'gender' => in_array(strtolower($data['gender'] ?? ''), ['male', 'female']) ? strtolower($data['gender']) : null,
+                'email' => !empty($data['email'] ?? '') ? $data['email'] : null,
+                'class' => trim($data['class'] ?? ''),
+                'phone' => !empty($data['phone'] ?? '') ? $data['phone'] : null,
+                'address' => !empty($data['address'] ?? '') ? $data['address'] : null,
+            ];
+
+            try {
+                $existing = Student::where('nis', $nis)->first();
+                if ($existing) {
+                    $existing->update($attrs);
+                    $updated++;
+                } else {
+                    Student::create($attrs);
+                    $created++;
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Baris {$rowNumber} (NIS: {$nis}): " . $e->getMessage();
+            }
+        }
+
+        fclose($handle);
+
+        $message = "Import selesai. Dibuat: {$created}. Diupdate: {$updated}. Dilewati: {$skipped}.";
+
+        return Redirect::route('students.index')->with('success', $message)->with('import_errors', $errors);
+    }
+
+    /**
+     * Download a small CSV template for imports.
+     */
+    public function importTemplate()
+    {
+        $csv = "nis,name,gender,class,phone,address,email\n";
+        $csv .= "12345,John Doe,male,10A,08123456789,Jl. Contoh,john@example.com\n";
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="students-template.csv"',
+        ]);
+    }
 }
