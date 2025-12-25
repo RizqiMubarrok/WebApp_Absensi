@@ -98,7 +98,7 @@ export default function Dashboard({ auth }) {
     const barOptions = {
         responsive: true,
         plugins: {
-            legend: { position: "bottom" },
+            legend: { display: false },
             tooltip: {
                 mode: "index",
                 intersect: false,
@@ -106,20 +106,36 @@ export default function Dashboard({ auth }) {
                     label: function (context) {
                         const idx = context.dataIndex;
                         if (source[idx] && source[idx].is_holiday) {
-                            // Show a single `Sekolah libur` label for the first dataset item
-                            if (context.datasetIndex === 0)
-                                return "Sekolah libur";
+                            // Show a single `grafik kosong karena sekolah libur` label for the first dataset item
+                            if (context.datasetIndex === 0) return "grafik kosong karena sekolah libur";
                             return "";
                         }
                         return `${context.dataset.label}: ${context.formattedValue}`;
                     },
+                    labelColor: function (context) {
+                        const idx = context.dataIndex;
+                        // For holiday dates, render a white box with a black stroke
+                        if (source[idx] && source[idx].is_holiday) {
+                            return { backgroundColor: "#ffffff", borderColor: "#000000", borderWidth: 2 };
+                        }
+                        const ds = context.dataset;
+                        const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[idx] : ds.backgroundColor;
+                        return { backgroundColor: bg, borderColor: bg, borderWidth: 0 };
+                    },
                 },
             },
         },
+
         scales: {
             x: {
                 stacked: true,
                 grid: { color: "rgba(0,0,0,0.04)", borderDash: [2, 4] },
+                ticks: {
+                    maxRotation: 45,
+                    minRotation: 45,
+                    align: 'end',
+                    autoSkip: false,
+                },
             },
             y: {
                 stacked: true,
@@ -283,8 +299,8 @@ export default function Dashboard({ auth }) {
 
                         <div className="mt-6 flex items-center justify-center gap-6 text-sm text-gray-600">
                             <div className="flex items-center gap-2">
-                                <span className="w-3 h-3 rounded-full bg-gray-400 inline-block"></span>
-                                <span>Sekolah libur</span>
+                                <span className="w-3 h-3 rounded-full bg-white border-2 border-black inline-block"></span>
+                                <span>grafik kosong karena sekolah libur</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="w-3 h-3 rounded-full bg-blue-600 inline-block"></span>
