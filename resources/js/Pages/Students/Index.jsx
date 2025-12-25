@@ -3,7 +3,14 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import Pagination from "@/Components/Pagination";
 
-export default function Index({ students, filters, classes, auth }) {
+export default function Index({
+    students,
+    filters,
+    classes,
+    auth,
+    total_students = 0,
+    total_classes = 0,
+}) {
     function destroy(id) {
         if (!confirm("Hapus siswa ini?")) return;
         window.axios
@@ -99,6 +106,23 @@ export default function Index({ students, filters, classes, auth }) {
                                 Tambah Data
                             </a>
                         </form>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-white p-4 rounded-xl shadow-md">
+                        <div className="text-sm text-gray-500">Total Siswa</div>
+                        <div className="text-2xl font-bold text-gray-800">
+                            {total_students}
+                        </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-xl shadow-md">
+                        <div className="text-sm text-gray-500">
+                            Jumlah Kelas
+                        </div>
+                        <div className="text-2xl font-bold text-gray-800">
+                            {total_classes}
+                        </div>
                     </div>
                 </div>
 

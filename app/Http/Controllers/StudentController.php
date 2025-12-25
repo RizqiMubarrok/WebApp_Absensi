@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class StudentController extends Controller
@@ -24,12 +25,30 @@ class StudentController extends Controller
         $perPage = (int) $request->query('per_page', 15);
         $students = $query->orderBy('name')->paginate($perPage)->withQueryString();
 
-        $classes = Student::select('class')->distinct()->whereNotNull('class')->pluck('class');
+        // get normalized (trimmed) distinct class list and totals
+        $classes = DB::table('students')
+            ->whereNotNull('class')
+            ->where('class', '<>', '')
+            ->select(DB::raw('TRIM(class) as class'))
+            ->distinct()
+            ->orderBy('class')
+            ->pluck('class');
+
+        // totals for dashboard cards
+        $totalStudents = Student::count();
+        $totalClasses = DB::table('students')
+            ->whereNotNull('class')
+            ->where('class', '<>', '')
+            ->select(DB::raw('TRIM(class) as class'))
+            ->distinct()
+            ->count('class');
 
         return Inertia::render('Students/Index', [
             'students' => $students,
             'filters' => $request->only(['q', 'class', 'per_page']),
             'classes' => $classes,
+            'total_students' => $totalStudents,
+            'total_classes' => $totalClasses,
         ]);
     }
 
