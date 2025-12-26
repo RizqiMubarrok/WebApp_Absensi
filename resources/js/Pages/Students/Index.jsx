@@ -27,8 +27,9 @@ export default function Index({
             onSuccess: (page) => {
                 const msg =
                     page?.props?.flash?.success || "Siswa berhasil dihapus.";
+                // ensure any old fallback is cleared (we show modal directly)
                 try {
-                    sessionStorage.setItem("student_deleted_message", msg);
+                    sessionStorage.removeItem("student_deleted_message");
                 } catch (e) {}
                 setShowConfirmDelete(false);
                 // show success modal directly
@@ -60,6 +61,9 @@ export default function Index({
     const [modalMessage, setModalMessage] = useState("");
 
     useEffect(() => {
+        // avoid showing another modal if one is already visible
+        if (showModal) return;
+
         // primary: show modal if Inertia flash.success exists
         if (flash?.success) {
             const msg = flash.success;
@@ -75,7 +79,10 @@ export default function Index({
                 ms.includes("tambah") ||
                 ms.includes("create") ||
                 ms.includes("created") ||
-                ms.includes("ditambah")
+                ms.includes("ditambah") ||
+                ms.includes("dibuat") ||
+                ms.includes("buat") ||
+                ms.includes("import")
             ) {
                 title = "Siswa Berhasil Ditambahkan";
             } else if (
@@ -136,7 +143,21 @@ export default function Index({
         const fd = new FormData();
         fd.append("file", file);
         // Use Inertia to POST FormData (preserves redirects & flash messages)
-        router.post(route("students.import"), fd, { forceFormData: true });
+        router.post(route("students.import"), fd, {
+            forceFormData: true,
+            onSuccess: (page) => {
+                try {
+                    const msg =
+                        page?.props?.flash?.success || "Import selesai.";
+                    // show the modal right away instead of waiting for a page refresh
+                    setModalTitle("Siswa Berhasil Ditambahkan");
+                    setModalMessage(msg);
+                    setShowModal(true);
+                    // clear any fallback just in case
+                    sessionStorage.removeItem("student_saved_message");
+                } catch (e) {}
+            },
+        });
         // clear the input so selecting the same file again will trigger change
         e.target.value = null;
     }

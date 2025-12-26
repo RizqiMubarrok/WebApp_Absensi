@@ -288,6 +288,80 @@ export default function Dashboard({ auth }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* Per-class attendance percentage cards */}
+                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {stats.class_stats && stats.class_stats.length > 0 ? (
+                            stats.class_stats.map((c) => (
+                                <div
+                                    key={c.class}
+                                    className="bg-white p-4 rounded-xl shadow-md"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-sm font-medium text-gray-700">
+                                            Kelas {c.class}
+                                        </div>
+                                        <div className="text-sm font-bold text-gray-700">
+                                            {c.percent}%
+                                        </div>
+                                    </div>
+                                    <div className="mt-3">
+                                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-2 bg-blue-600 rounded-full"
+                                                style={{
+                                                    width: `${c.percent}%`,
+                                                }}
+                                            ></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-gray-600">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>
+                                            <span>
+                                                Hadir:{" "}
+                                                <strong className="text-gray-800 ms-1">
+                                                    {c.present}
+                                                </strong>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block"></span>
+                                            <span>
+                                                Izin:{" "}
+                                                <strong className="text-gray-800 ms-1">
+                                                    {c.permit}
+                                                </strong>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-red-500 inline-block"></span>
+                                            <span>
+                                                Alfa:{" "}
+                                                <strong className="text-gray-800 ms-1">
+                                                    {c.absent}
+                                                </strong>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                                            <span>
+                                                Sakit:{" "}
+                                                <strong className="text-gray-800 ms-1">
+                                                    {c.sick}
+                                                </strong>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="col-span-full text-sm text-gray-500">
+                                Tidak ada data kelas.
+                            </div>
+                        )}
+                    </div>
                 </div>
                 {/* Chart card */}
                 <div className="bg-gray-50 rounded-xl p-4">

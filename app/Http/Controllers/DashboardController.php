@@ -22,6 +22,39 @@ class DashboardController extends Controller
         // number of distinct classes
         $classesCount = Student::select('class')->distinct()->whereNotNull('class')->count();
 
+        // per-class attendance stats for today (percentage of students with attendance recorded and status counts)
+        $classStats = [];
+        $classes = Student::select('class')->distinct()->whereNotNull('class')->where('class', '<>', '')->orderBy('class')->pluck('class');
+        foreach ($classes as $class) {
+            $totalStudentsInClass = Student::where('class', $class)->count();
+
+            $counts = Attendance::whereDate('date', $today)
+                ->whereHas('student', fn($q) => $q->where('class', $class))
+                ->selectRaw('status, count(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status')
+                ->toArray();
+
+            $present = $counts['present'] ?? 0;
+            $permit = $counts['permit'] ?? 0;
+            $absent = $counts['absent'] ?? 0;
+            $sick = $counts['sick'] ?? 0;
+
+            $marked = $present + $permit + $absent + $sick;
+            $percent = $totalStudentsInClass ? (int) round($marked / $totalStudentsInClass * 100) : 0;
+
+            $classStats[] = [
+                'class' => $class,
+                'total_students' => $totalStudentsInClass,
+                'marked' => $marked,
+                'percent' => $percent,
+                'present' => $present,
+                'permit' => $permit,
+                'absent' => $absent,
+                'sick' => $sick,
+            ];
+        }
+
         // last 7 days breakdown by status
         $last7 = collect();
         for ($i = 6; $i >= 0; $i--) {
@@ -73,6 +106,7 @@ class DashboardController extends Controller
             'total_students' => $totalStudents,
             'recap' => $recap,
             'classes_count' => $classesCount,
+            'class_stats' => $classStats,
             'last7' => $last7,
             'month' => $month,
         ]);
