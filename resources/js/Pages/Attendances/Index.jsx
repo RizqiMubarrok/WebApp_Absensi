@@ -321,11 +321,18 @@ export default function Index({
                         })();
 
                         // filter attendances to only show rows matching the recapDate and recapClass
-                        const filteredAttendances = (attendances.data || []).filter((a) => {
+                        const filteredAttendances = (
+                            attendances.data || []
+                        ).filter((a) => {
                             const aDate = a.date ? a.date.slice(0, 10) : null;
                             if (!aDate) return false;
                             if (aDate !== recapDate) return false;
-                            if (recapClass && a.student && a.student.class !== recapClass) return false;
+                            if (
+                                recapClass &&
+                                a.student &&
+                                a.student.class !== recapClass
+                            )
+                                return false;
                             return true;
                         });
 
@@ -368,7 +375,11 @@ export default function Index({
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {filteredAttendances.map((a) => (
-                                        <tr key={`${a.id}-${a.student_id || a.student?.id}`}>
+                                        <tr
+                                            key={`${a.id}-${
+                                                a.student_id || a.student?.id
+                                            }`}
+                                        >
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {formatDate(a.date)}
                                             </td>
@@ -380,7 +391,8 @@ export default function Index({
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <Badge type={a.status}>
-                                                    {STATUS_LABELS[a.status] ?? a.status}
+                                                    {STATUS_LABELS[a.status] ??
+                                                        a.status}
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
