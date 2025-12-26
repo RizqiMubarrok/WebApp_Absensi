@@ -14,6 +14,13 @@ class AttendanceController extends Controller
 {
     public function index(Request $request)
     {
+        // provide classes list early so we can default table filters to the first available class
+        $classes = Student::select('class')->distinct()->whereNotNull('class')->orderBy('class')->pluck('class');
+        $classFilter = $request->query('class');
+        if (!$classFilter && $classes->isNotEmpty()) {
+            $classFilter = $classes->first();
+        }
+
         $query = Attendance::with('student');
 
         if ($q = $request->query('q')) {
@@ -29,13 +36,16 @@ class AttendanceController extends Controller
         }
 
         // support filtering attendances by student class (rekap) — uses `class` query param
-        $classFilter = $request->query('class');
         if ($classFilter) {
             $query->whereHas('student', fn($s) => $s->where('class', $classFilter));
         }
 
         // support filtering the marking UI by class via `student_class` param (this does NOT affect the rekap table)
         $studentClass = $request->query('student_class');
+        if (!$studentClass && $classes->isNotEmpty()) {
+            // default the marking UI to the first available class so the attendance input table shows that class by default
+            $studentClass = $classes->first();
+        }
 
         // By default show as many rows as there are students so the table isn't limited to 15.
         // Also allow `?per_page=all` to return every attendance row.
@@ -50,11 +60,12 @@ class AttendanceController extends Controller
             $attendances = $query->orderByDesc('date')->paginate($perPage)->withQueryString();
         }
 
-        // provide classes list for class selector
-        $classes = Student::select('class')->distinct()->whereNotNull('class')->orderBy('class')->pluck('class');
-
         // provide student list for attendance marking UI (filtered by student_class if requested)
         $students = Student::when($studentClass, fn($q) => $q->where('class', $studentClass))->orderBy('name')->get();
+
+        // provide classes list for class selector (already computed earlier)
+        // (kept here for clarity of the return payload)
+        $classes = $classes ?? Student::select('class')->distinct()->whereNotNull('class')->orderBy('class')->pluck('class');
 
         // detect if the requested recap date is a Sunday (school holiday)
         $isHoliday = false;
@@ -75,11 +86,19 @@ class AttendanceController extends Controller
             $marking_is_holiday = false;
         }
 
+        $filters = $request->only(['q', 'status', 'date', 'per_page', 'class', 'student_class']);
+        if (empty($filters['student_class']) && $studentClass) {
+            $filters['student_class'] = $studentClass;
+        }
+        if (empty($filters['class']) && $classFilter) {
+            $filters['class'] = $classFilter;
+        }
+
         return Inertia::render('Attendances/Index', [
             'attendances' => $attendances,
             'students' => $students,
             'classes' => $classes,
-            'filters' => $request->only(['q', 'status', 'date', 'per_page', 'class', 'student_class']),
+            'filters' => $filters,
             'is_holiday' => $isHoliday,
             'marking_is_holiday' => $marking_is_holiday,
         ]);
