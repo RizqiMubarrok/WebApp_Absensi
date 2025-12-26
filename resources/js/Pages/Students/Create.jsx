@@ -14,7 +14,17 @@ export default function Create({ auth }) {
 
     function submit(e) {
         e.preventDefault();
-        post(route("students.store"));
+        post(route("students.store"), {
+            onSuccess: (page) => {
+                // Store message so index page can reliably show a modal even if flash isn't available immediately
+                try {
+                    const msg =
+                        page?.props?.flash?.success ||
+                        "Siswa berhasil ditambahkan.";
+                    sessionStorage.setItem("student_saved_message", msg);
+                } catch (e) {}
+            },
+        });
     }
 
     return (

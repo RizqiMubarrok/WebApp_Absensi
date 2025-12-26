@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, Link, useForm, router } from "@inertiajs/react";
+import { Head, Link, useForm, router, usePage } from "@inertiajs/react";
 import Badge from "@/Components/Badge";
 
 function formatDate(iso) {
@@ -45,6 +45,18 @@ export default function Index({
             note: "",
         })),
     });
+
+    // Show a centered modal (confirm-like) when attendance save succeeds
+    const { flash } = usePage().props;
+    const [showSavedModal, setShowSavedModal] = useState(false);
+    const [savedMessage, setSavedMessage] = useState("");
+
+    useEffect(() => {
+        if (flash?.success) {
+            setSavedMessage(flash.success);
+            setShowSavedModal(true);
+        }
+    }, [flash?.success]);
 
     const markingIsHoliday = (() => {
         try {
@@ -141,7 +153,15 @@ export default function Index({
 
     function submit(e) {
         e.preventDefault();
-        post(route("attendances.store"));
+        post(route("attendances.store"), {
+            onSuccess: (page) => {
+                // prefer server-provided flash message, fallback to default
+                const msg =
+                    page?.props?.flash?.success || "Absensi berhasil disimpan.";
+                setSavedMessage(msg);
+                setShowSavedModal(true);
+            },
+        });
     }
 
     return (
@@ -406,6 +426,51 @@ export default function Index({
                     })()}
                 </div>
             </div>
+
+            {/* saved modal (confirm-like) shown after successful save */}
+            {showSavedModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div
+                        className="fixed inset-0 bg-black/40"
+                        aria-hidden="true"
+                    ></div>
+                    <div className="bg-white rounded-lg shadow-lg p-6 z-50 max-w-md w-full mx-4">
+                        <div className="flex items-start gap-3">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-6 w-6 text-green-600"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
+                            <div>
+                                <div className="text-lg font-medium text-gray-800">
+                                    Absensi Berhasil
+                                </div>
+                                <div className="mt-2 text-sm text-gray-600">
+                                    {savedMessage}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => setShowSavedModal(false)}
+                                className="bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md transition-colors duration-150"
+                            >
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

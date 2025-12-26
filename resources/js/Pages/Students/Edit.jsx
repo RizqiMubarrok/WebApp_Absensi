@@ -14,7 +14,16 @@ export default function Edit({ student, auth }) {
 
     function submit(e) {
         e.preventDefault();
-        put(route("students.update", student.id));
+        put(route("students.update", student.id), {
+            onSuccess: (page) => {
+                try {
+                    const msg =
+                        page?.props?.flash?.success ||
+                        "Siswa berhasil dirubah.";
+                    sessionStorage.setItem("student_updated_message", msg);
+                } catch (e) {}
+            },
+        });
     }
 
     return (

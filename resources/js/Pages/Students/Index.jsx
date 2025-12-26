@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, usePage, router } from "@inertiajs/react";
 import Pagination from "@/Components/Pagination";
@@ -11,11 +11,35 @@ export default function Index({
     total_students = 0,
     total_classes = 0,
 }) {
-    function destroy(id) {
-        if (!confirm("Hapus siswa ini?")) return;
-        window.axios
-            .delete(`/students/${id}`)
-            .then(() => window.location.reload());
+    // open a styled confirm modal before deleting a student
+    const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+    const [studentToDelete, setStudentToDelete] = useState(null);
+
+    function openConfirmDelete(id, name) {
+        setStudentToDelete({ id, name });
+        setShowConfirmDelete(true);
+    }
+
+    async function performDelete() {
+        if (!studentToDelete) return;
+        const id = studentToDelete.id;
+        router.delete(route("students.destroy", id), {
+            onSuccess: (page) => {
+                const msg =
+                    page?.props?.flash?.success || "Siswa berhasil dihapus.";
+                try {
+                    sessionStorage.setItem("student_deleted_message", msg);
+                } catch (e) {}
+                setShowConfirmDelete(false);
+                // show success modal directly
+                setModalTitle("Siswa Berhasil Dihapus");
+                setModalMessage(msg);
+                setShowModal(true);
+            },
+            onError: () => {
+                setShowConfirmDelete(false);
+            },
+        });
     }
 
     // Defensive handling: Inertia may sometimes provide a plain array or missing meta.
@@ -29,6 +53,79 @@ export default function Index({
         ((meta.current_page ?? 1) - 1) * (meta.per_page ?? rows.length);
 
     const { flash } = usePage().props;
+
+    // Generic centered modal to show success messages (created/deleted)
+    const [showModal, setShowModal] = useState(false);
+    const [modalTitle, setModalTitle] = useState("");
+    const [modalMessage, setModalMessage] = useState("");
+
+    useEffect(() => {
+        // primary: show modal if Inertia flash.success exists
+        if (flash?.success) {
+            const msg = flash.success;
+            let title = "Berhasil";
+            const ms = (msg || "").toLowerCase();
+            if (
+                ms.includes("hapus") ||
+                ms.includes("delete") ||
+                ms.includes("deleted")
+            ) {
+                title = "Siswa Berhasil Dihapus";
+            } else if (
+                ms.includes("tambah") ||
+                ms.includes("create") ||
+                ms.includes("created") ||
+                ms.includes("ditambah")
+            ) {
+                title = "Siswa Berhasil Ditambahkan";
+            } else if (
+                ms.includes("ubah") ||
+                ms.includes("update") ||
+                ms.includes("updated") ||
+                ms.includes("dirubah") ||
+                ms.includes("diperbarui")
+            ) {
+                title = "Siswa Berhasil Dirubah";
+            }
+            setModalTitle(title);
+            setModalMessage(msg);
+            setShowModal(true);
+            // clear any fallback keys
+            sessionStorage.removeItem("student_saved_message");
+            sessionStorage.removeItem("student_deleted_message");
+            sessionStorage.removeItem("student_updated_message");
+        }
+
+        // fallback: check sessionStorage (set by Create.jsx onSuccess or delete handler) in case flash is not present yet
+        const fallbackSaved = sessionStorage.getItem("student_saved_message");
+        if (fallbackSaved) {
+            setModalTitle("Siswa Berhasil Ditambahkan");
+            setModalMessage(fallbackSaved);
+            setShowModal(true);
+            sessionStorage.removeItem("student_saved_message");
+        }
+
+        const fallbackDeleted = sessionStorage.getItem(
+            "student_deleted_message"
+        );
+        if (fallbackDeleted) {
+            setModalTitle("Siswa Berhasil Dihapus");
+            setModalMessage(fallbackDeleted);
+            setShowModal(true);
+            sessionStorage.removeItem("student_deleted_message");
+        }
+
+        const fallbackUpdated = sessionStorage.getItem(
+            "student_updated_message"
+        );
+        if (fallbackUpdated) {
+            setModalTitle("Siswa Berhasil Dirubah");
+            setModalMessage(fallbackUpdated);
+            setShowModal(true);
+            sessionStorage.removeItem("student_updated_message");
+        }
+    }, [flash?.success]);
+
     const csrfToken = document
         .querySelector('meta[name="csrf-token"]')
         ?.getAttribute("content");
@@ -179,9 +276,104 @@ export default function Index({
                         </form>
                     </div>
 
-                    {flash?.success && (
-                        <div className="mt-4 p-4 bg-green-50 border-l-4 border-green-500 text-green-700">
-                            {flash.success}
+                    {showModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center">
+                            <div
+                                className="fixed inset-0 bg-black/40"
+                                aria-hidden="true"
+                            ></div>
+                            <div className="bg-white rounded-lg shadow-lg p-6 z-50 max-w-md w-full mx-4">
+                                <div className="flex items-start gap-3">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-6 w-6 text-green-600"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M5 13l4 4L19 7"
+                                        />
+                                    </svg>
+                                    <div>
+                                        <div className="text-lg font-medium text-gray-800">
+                                            {modalTitle}
+                                        </div>
+                                        <div className="mt-2 text-sm text-gray-600">
+                                            {modalMessage}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 flex justify-end">
+                                    <button
+                                        onClick={() => setShowModal(false)}
+                                        className="bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md transition-colors duration-150"
+                                    >
+                                        OK
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* confirm delete modal */}
+                    {showConfirmDelete && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center">
+                            <div
+                                className="fixed inset-0 bg-black/40"
+                                aria-hidden="true"
+                            ></div>
+                            <div className="bg-white rounded-lg shadow-lg p-6 z-50 max-w-md w-full mx-4">
+                                <div className="flex items-start gap-3">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-6 w-6 text-red-600"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+                                        />
+                                    </svg>
+                                    <div>
+                                        <div className="text-lg font-medium text-gray-800">
+                                            Hapus Siswa?
+                                        </div>
+                                        <div className="mt-2 text-sm text-gray-600">
+                                            Apakah Anda yakin ingin menghapus{" "}
+                                            <strong>
+                                                {studentToDelete?.name}
+                                            </strong>
+                                            ?
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 flex justify-end gap-3">
+                                    <button
+                                        onClick={() =>
+                                            setShowConfirmDelete(false)
+                                        }
+                                        className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md transition-colors duration-150"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        onClick={performDelete}
+                                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors duration-150"
+                                    >
+                                        Hapus
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -295,7 +487,12 @@ export default function Index({
                                                 Edit
                                             </a>
                                             <button
-                                                onClick={() => destroy(s.id)}
+                                                onClick={() =>
+                                                    openConfirmDelete(
+                                                        s.id,
+                                                        s.name
+                                                    )
+                                                }
                                                 className="bg-red-500 text-white px-3 py-1 rounded text-sm inline-flex items-center justify-center w-14 ml-2"
                                             >
                                                 Hapus
