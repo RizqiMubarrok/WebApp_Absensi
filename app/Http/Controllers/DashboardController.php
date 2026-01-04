@@ -76,10 +76,10 @@ class DashboardController extends Controller
             ]);
         }
 
-        // monthly breakdown from the 1st of this month up to today
+        // monthly breakdown from the 1st of this month through the end of the month
         $month = collect();
         $start = now()->startOfMonth();
-        $end = now();
+        $end = now()->endOfMonth();
         $d = $start->copy();
         while ($d->lte($end)) {
             $date = $d->format('Y-m-d');
