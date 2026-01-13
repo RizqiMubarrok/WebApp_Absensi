@@ -16,7 +16,6 @@ class AdminSeeder extends Seeder
         $admins = [
             ['email' => 'admin01@example.com', 'name' => 'admin', 'password' => '87654321'],
             ['email' => 'admin1@example.com', 'name' => 'admin', 'password' => '87654321'],
-            ['email' => 'adminsatu@example.com', 'name' => 'admin', 'password' => '87654321'],
         ];
 
         foreach ($admins as $a) {
