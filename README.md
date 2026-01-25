@@ -47,13 +47,12 @@ Sekolah memerlukan sistem yang efisien untuk mencatat, menyimpan, dan menganalis
 - Tabel rekapan dengan filter berdasarkan tanggal dan kelas
 - Hitung statistik kehadiran per siswa dalam periode tertentu
 - **Export ke Excel**: Download rekapan dalam format `.xlsx`
-- **Cetak PDF**: Cetak langsung dari browser dengan layout profesional
+- **Cetak PDF**: Cetak langsung dari browser
 - Tampilkan total hadir, izin, alfa, sakit per siswa
 
 ### 5. **Autentikasi & Profil**
 
-- Login dengan email dan password
-- Manajemen profil pengguna (ubah nama, email, password)
+- Manajemen profil pengguna (ubah nama, password)
 - Logout aman dengan session terkelola
 
 ## 🖼️ Tampilan Aplikasi
@@ -64,7 +63,7 @@ Berikut adalah screenshot tampilan aplikasi:
 
 ![Halaman Login](UI/Halaman_Login.png)
 
-Halaman login dengan form email dan password untuk autentikasi pengguna.
+Halaman login dengan form username dan password untuk autentikasi pengguna.
 
 ### Dashboard - Statistik
 
@@ -76,7 +75,7 @@ Dashboard utama menampilkan pie chart kehadiran hari ini, kartu statistik per-ke
 
 ![Dashboard 2](UI/Halaman_Dashoard2.png)
 
-Grafik batang yang menampilkan tren kehadiran selama satu bulan penuh, dengan hari libur ditandai dengan warna abu-abu.
+Grafik batang yang menampilkan tren kehadiran selama satu bulan penuh, dengan hari libur ditandai dengan grafik kosong.
 
 ### Halaman Data Siswa - Daftar
 
@@ -88,7 +87,7 @@ Tabel daftar siswa dengan fitur pencarian, filter per-kelas, dan opsi edit/hapus
 
 ![Data Siswa 2](UI/Halaman_DataSiswa2.png)
 
-Form untuk menambah atau mengedit data siswa (NISN, nama, jenis kelamin, kelas, alamat, nomor HP, email).
+Form untuk menambah atau mengedit data siswa (NISN, nama, jenis kelamin, kelas, alamat, nomor HP).
 
 ### Halaman Pencatatan Kehadiran
 
@@ -106,19 +105,19 @@ Daftar siswa dengan tombol untuk memilih status kehadiran (hadir, izin, alfa, sa
 
 ![Absensi Siswa 3](UI/Halaman_AbsensiSiswa3.png)
 
-Modal atau detail untuk menampilkan atau mengubah status kehadiran siswa tertentu.
+pencatatan kehadiran tidak bisa dilakukan ketika sekolah libur yaitu di hari minggu.
 
 ### Halaman Rekapan Kehadiran
 
 ![Rekapan Absensi](UI/Halaman_RekapanAbsensi.png)
 
-Tabel rekapan dengan filter tanggal dan kelas, menampilkan status kehadiran siswa dalam periode tertentu.
+Tabel rekapan dengan filter tanggal dan kelas, menampilkan status kehadiran siswa dalam periode satu bulan.
 
 ### Halaman Cetak/Export Rekapan
 
 ![Print Rekapan](UI/Halaman_PrintRekapanAbsensi.png)
 
-Halaman cetak PDF yang menampilkan rekapan kehadiran dengan layout profesional siap cetak.
+Halaman cetak PDF yang menampilkan rekapan kehadiran.
 
 ### Halaman Profil Pengguna
 
@@ -167,7 +166,7 @@ Form untuk mengganti password pengguna yang saat ini login.
 - nis (string, unique) - Nomor Induk Siswa
 - name (string) - Nama Siswa
 - email (string, nullable, unique)
-- class (string, nullable) - Kelas (TI5A, TI5B, dll)
+- class (string, nullable) - Kelas
 - phone (string, nullable)
 - address (text, nullable)
 - gender (string, nullable) - Jenis Kelamin (male/female)
