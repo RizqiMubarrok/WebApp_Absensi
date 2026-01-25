@@ -17,12 +17,9 @@ use Inertia\Inertia;
 */
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    // Redirect root to the login page so the artisan serve URL opens the login by default.
+    // Guest middleware on the login route will forward authenticated users to the home/dashboard as needed.
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {
@@ -40,8 +37,15 @@ Route::middleware('auth')->group(function () {
 
     // Students management (pages + actions)
     Route::resource('students', \App\Http\Controllers\StudentController::class);
+    // CSV import for bulk student creation/update
+    Route::post('students/import', [\App\Http\Controllers\StudentController::class, 'import'])->name('students.import');
+    Route::get('students/import/template', [\App\Http\Controllers\StudentController::class, 'importTemplate'])->name('students.import.template');
 
     // Attendance management
+    Route::get('attendances/rekap/print', [\App\Http\Controllers\AttendanceController::class, 'rekapPrint'])->name('attendances.rekap.print');
+    Route::get('attendances/rekap/export', [\App\Http\Controllers\AttendanceController::class, 'rekapExport'])->name('attendances.rekap.export');
+    Route::get('attendances/rekap', [\App\Http\Controllers\AttendanceController::class, 'rekap'])->name('attendances.rekap');
+    Route::get('attendances/classes', [\App\Http\Controllers\AttendanceController::class, 'classes'])->name('attendances.classes');
     Route::get('attendances', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('attendances.index');
     Route::post('attendances', [\App\Http\Controllers\AttendanceController::class, 'store'])->name('attendances.store');
 });

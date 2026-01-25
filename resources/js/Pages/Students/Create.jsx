@@ -14,7 +14,17 @@ export default function Create({ auth }) {
 
     function submit(e) {
         e.preventDefault();
-        post(route("students.store"));
+        post(route("students.store"), {
+            onSuccess: (page) => {
+                // Store message so index page can reliably show a modal even if flash isn't available immediately
+                try {
+                    const msg =
+                        page?.props?.flash?.success ||
+                        "Siswa berhasil ditambahkan.";
+                    sessionStorage.setItem("student_saved_message", msg);
+                } catch (e) {}
+            },
+        });
     }
 
     return (
@@ -154,7 +164,7 @@ export default function Create({ auth }) {
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-blue-600 text-white px-6 py-2 rounded"
+                                className="bg-[#2F59C8] hover:bg-[#274aa8] text-white px-6 py-2 rounded transition-colors duration-150"
                             >
                                 Simpan
                             </button>

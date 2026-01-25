@@ -14,8 +14,8 @@ export default function Sidebar() {
             <div className="p-6 flex flex-col justify-between h-full">
                 <div>
                     <div className="mb-8">
-                        <div className="font-bold tracking-wide text-lg">
-                            ABSENSIQ_UI
+                        <div className="font-bold tracking-wide text-lg text-center">
+                            ABSENSIQ
                         </div>
                     </div>
 
@@ -113,34 +113,32 @@ export default function Sidebar() {
                 </div>
 
                 <div>
-                    <form method="post" action={route("logout")}>
-                        <input type="hidden" name="_token" value="" />
-                        <button
-                            type="submit"
-                            className="w-full flex items-center gap-3 text-sm bg-white/10 hover:bg-white/20 px-3 py-2 rounded-md"
+                    <Link
+                        method="post"
+                        href={route("logout")}
+                        className={itemClass(false)}
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M17 16l4-4m0 0l-4-4m4 4H7"
-                                />
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M7 8v8"
-                                />
-                            </svg>
-                            <span>Logout</span>
-                        </button>
-                    </form>
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7"
+                            />
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M7 8v8"
+                            />
+                        </svg>
+                        <span>Logout</span>
+                    </Link>
                 </div>
             </div>
         </aside>

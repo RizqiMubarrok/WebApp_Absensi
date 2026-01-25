@@ -96,7 +96,12 @@ export default function UpdateProfileInformation({
                 )}
 
                 <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                    <PrimaryButton
+                        className="bg-[#2F59C8] hover:bg-[#274aa8] text-white px-4 py-2 rounded-md transition-colors duration-150"
+                        disabled={processing}
+                    >
+                        Save
+                    </PrimaryButton>
 
                     <Transition
                         show={recentlySuccessful}
